@@ -15,29 +15,27 @@ const config: Configuration = {
 @Injectable()
 export class PsqlService {
 
-    async getUsers() {
-        const client = new Client(config)
-        await client.connect();
-        let users: User[] = []
+    private client: Client
 
-        let result = await client.query(
-            `SELECT * from users`
-        );        
-
-        await client.end();
-        return result.rows.map( (row) => new User( parseInt(row[0].toString()), row[1].toString()) )
+    async getClient() {
+        if (this.client === undefined){
+            this.client = new Client(config)
+            await this.client.connect()
+        }
+        return this.client
     }
 
-    async getDaily() {
+    async addUser() {
         const client = new Client(config)
         await client.connect();
         let users: Daily[] = []
 
         let result = await client.query(
-            `SELECT * from daily`
-        );        
+        //     `SELECT '' || $1 || '' AS message`,
+        // ['world']
+            `INSERT INTO users(name) VALUES('' || $1 || '')`, ['Marek']
+        ).catch( (e) => console.log(e) ).then( (res) => console.log(res));        
         await client.end();
-        return result.rows.map( (row) => new Daily(  parseInt(row[0].toString()), row[1].toString(), parseInt(row[2].toString()) ) )
     }
 }
 
