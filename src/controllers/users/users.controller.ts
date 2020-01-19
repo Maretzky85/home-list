@@ -1,7 +1,8 @@
-import { Controller, Get, Inject, HttpException, HttpStatus, HttpCode } from '@nestjs/common';
+import { Controller, Get, Inject, HttpException, HttpStatus, HttpCode, Post, Body, Param } from '@nestjs/common';
 import { UsersDataService } from 'src/services/users-data/users-data.service';
 import { UserDto } from 'src/models/userDto';
 import { DailyService } from 'src/services/daily/daily.service';
+import { User } from 'src/models/user';
 
 @Controller('users')
 export class UsersController {
@@ -11,46 +12,43 @@ export class UsersController {
 
     @Get()
     async getUsers(){
-        console.log('users controller root method...')
         return await this.usersService.getUsers()
-    }
-
-    @Get('daily')
-    async getDaily(){
-        await this.dailyService.createDaily('blabla', 0)
-        return await this.dailyService.getDailys()
     }
 
     @Get('all')
     async getAllData(){
-        let users = await this.usersService.getUsers()
-        let daily = await this.dailyService.getDailys()
+        let users = await this.usersService.getUsers();
+        let daily = await this.dailyService.getDailys();
         let result: UserDto[] = []
         users.map( (user) => {
             result.push(
-                new UserDto(user, daily.filter( 
-                    (daily) => daily.user_id === user.id ))
+                new UserDto(user, daily.filter(
+                    (daily) => daily.userId === user.id ))
                     ) 
         } )
         return result
     }
 
-    @Get('addUser')
+    @Post()
     @HttpCode(201)
-    async addUser(){
-        await this.usersService.createUser('maretzky')
-            .catch( (error) => {throw new HttpException("user exist", HttpStatus.CONFLICT)} )
-        return 'yay'
+    async addUser(@Body() user: User){
+        await this.usersService.createUser(user.name)
+            .catch( (error) => {throw new HttpException('user exist', HttpStatus.CONFLICT); } );
     }
 
     @Get('deleteUser')
-    async deleteUser(){
-        await this.usersService.deleteUser(10)
+    async deleteUser() {
+        await this.usersService.deleteUser(10);
     }
 
-    @Get('editUser') 
+    @Get('editUser')
     async editUser() {
-        await this.usersService.editUser(3, 'maretzky')
+        await this.usersService.editUser(3, 'maretzky');
+    }
+
+    @Get('/:id/daily')
+    async getDailyForUser(@Param() params) {
+        return this.dailyService.getDailyByUserId(params.id);
     }
 
 }
